@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Audio Search
+ *
+ * Use Google's cloud Speech to Text api to listen audio and make a search based on what the customer said.
+ *
+ * @package ImaginationMedia\AudioSearch
+ * @author Igor Ludgero Miura <igor@imaginationmedia.com>
+ * @copyright Copyright (c) 2018 Imagination Media (https://www.imaginationmedia.com/)
+ * @license https://opensource.org/licenses/OSL-3.0.php Open Software License 3.0
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="imaginationmedia" translate="label" sortOrder="100">
+            <label>Imagination Media</label>
+        </tab>
+        <section id="audiosearch" showInDefault="1" showInWebsite="1" showInStore="1" type="text" translate="label"
+                 sortOrder="100">
+            <label>Audio Search</label>
+            <tab>imaginationmedia</tab>
+            <resource>ImaginationMedia_AudioSearch::settings</resource>
+            <group id="general" showInDefault="1" showInWebsite="1" showInStore="1" sortOrder="20">
+                <label>Configuration</label>
+                <field id="enable" translate="label" type="select" sortOrder="1" showInDefault="1"
+                       showInWebsite="0" showInStore="0">
+                    <label>Enable</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="project_id" translate="label comment" type="text" sortOrder="2" showInDefault="1"
+                       showInWebsite="0" showInStore="0">
+                    <label>Project ID</label>
+                    <comment>Speech to Text project id.</comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

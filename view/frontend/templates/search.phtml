@@ -1,0 +1,105 @@
+<?php
+
+/**
+ * Audio Search
+ *
+ * Use Google's cloud Speech to Text api to listen audio and make a search based on what the customer said.
+ *
+ * @package ImaginationMedia\AudioSearch
+ * @author Igor Ludgero Miura <igor@imaginationmedia.com>
+ * @copyright Copyright (c) 2018 Imagination Media (https://www.imaginationmedia.com/)
+ * @license https://opensource.org/licenses/OSL-3.0.php Open Software License 3.0
+ */
+
+/**
+ * @var $this \ImaginationMedia\AudioSearch\Block\Search
+ */
+
+?>
+
+<div id="popup-notification-link">
+    <p class="link">
+        <a href="javascript:showSearch();"><?= __('Tell me what you need') ?></a>
+    </p>
+</div>
+
+<div class="hover_bkgr_fricc" id="popup-notification-search">
+    <span class="helper"></span>
+    <div>
+        <div id="popupCloseButton" class="popupCloseButton" onclick="closePopUp();">X</div>
+        <div id="inputAudio">
+            <image src="<?= $this->getViewFileUrl('ImaginationMedia_AudioSearch::images/microphone.svg') ?>"
+                   id="recordImage" onclick="askForAudio();"/>
+            <legend><?= __('Click in the image and tell us what you need.') ?></legend>
+            <input type="file" accept="audio/*" capture="microphone" id="recorder" style="display: none;">
+        </div>
+        <image src="<?= $this->getViewFileUrl('ImaginationMedia_AudioSearch::images/gear.svg') ?>"
+               id="loadingAudioImage" style="display: none;" />
+        <p id="error-audio" style="display: none;"><?= __('Invalid file provided. Please try again.') ?></p>
+    </div>
+</div>
+
+<script>
+    let popupLinkElement = document.getElementById("popup-notification-link");
+    let popupFormElement = document.getElementById("popup-notification-search");
+    let errorElement = document.getElementById("error-audio");
+    let recorder = document.getElementById("recorder");
+    let closePopupElement = document.getElementById("popupCloseButton");
+    let loadingAudioImage = document.getElementById("loadingAudioImage");
+    let divInputAudioElement = document.getElementById("inputAudio");
+
+    function showSearch()
+    {
+        popupLinkElement.classList.add("hide");
+        popupFormElement.classList.add("show");
+    }
+
+    function askForAudio()
+    {
+        recorder.click();
+    }
+
+    function closePopUp()
+    {
+        popupLinkElement.classList.remove("hide");
+        popupFormElement.classList.remove("show");
+    }
+
+    function loadData()
+    {
+        loadingAudioImage.style.display = "block";
+        divInputAudioElement.style.display = "none";
+    }
+
+    function finishLoadData()
+    {
+        loadingAudioImage.style.display = "none";
+        divInputAudioElement.style.display = "block";
+    }
+
+    recorder.addEventListener('change', function(e) {
+        errorElement.style.display = 'none';
+        if (e.target !== undefined) {
+            loadData();
+            let file = e.target.files[0];
+            let formData = new FormData();
+            formData.append('audio_file', file, file.name);
+            let xhr = new XMLHttpRequest();
+            xhr.open('POST', '<?= $this->getFormUrl() ?>', true);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    if (xhr.responseText !== "") {
+                        console.log(xhr.responseText);
+                        window.location.href = JSON.parse(xhr.responseText);
+                    } else {
+                        console.log('Impossible to listen');
+                    }
+                } else {
+                    errorElement.style.display = 'block';
+                    finishLoadData();
+                }
+            };
+            xhr.send(formData);
+        }
+    });
+</script>

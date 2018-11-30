@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Audio Search
+ *
+ * Use Google's cloud Speech to Text api to listen audio and make a search based on what the customer said.
+ *
+ * @package ImaginationMedia\AudioSearch
+ * @author Igor Ludgero Miura <igor@imaginationmedia.com>
+ * @copyright Copyright (c) 2018 Imagination Media (https://www.imaginationmedia.com/)
+ * @license https://opensource.org/licenses/OSL-3.0.php Open Software License 3.0
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <resource id="ImaginationMedia_AudioSearch::settings" title="Audio Search - Settings" sortOrder="1" />
+            </resource>
+        </resources>
+    </acl>
+</config>
