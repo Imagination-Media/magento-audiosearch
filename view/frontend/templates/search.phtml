@@ -119,7 +119,7 @@
         xhr.open('POST', '<?= $this->getFormUrl() ?>', true);
         xhr.onload = function () {
             if (xhr.status === 200) {
-                if (xhr.responseText !== "") {timmerSeconds
+                if (xhr.responseText !== "") {
                     window.location.href = JSON.parse(xhr.responseText);
                 } else {
                     console.log('Impossible to listen');
