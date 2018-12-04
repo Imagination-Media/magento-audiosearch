@@ -19,17 +19,10 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Filesystem;
-use Magento\MediaStorage\Model\File\Uploader;
-use Magento\MediaStorage\Model\File\UploaderFactory;
 
 class Index extends Action
 {
     const UPLOAD_DIRECTORY = "audiosearch";
-
-    /**
-     * @var UploaderFactory
-     */
-    private $uploaderFactory;
 
     /**
      * @var Filesystem
@@ -49,45 +42,41 @@ class Index extends Action
     /**
      * Index constructor.
      * @param Context $context
-     * @param UploaderFactory $uploaderFactory
      * @param Filesystem $filesystem
      * @param JsonFactory $jsonFactory
      * @param Helper $helper
      */
     public function __construct(
         Context $context,
-        UploaderFactory $uploaderFactory,
         Filesystem $filesystem,
         JsonFactory $jsonFactory,
         Helper $helper
     ) {
         parent::__construct($context);
-        $this->uploaderFactory = $uploaderFactory;
         $this->fileSystem = $filesystem;
         $this->jsonFactory = $jsonFactory;
         $this->helper = $helper;
     }
 
-
+    /**
+     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\Result\Json|\Magento\Framework\Controller\ResultInterface
+     */
     public function execute()
     {
         $files = $_FILES;
-        if (key_exists("audio_file", $files) &&  strpos($files["audio_file"]["type"], "audio/") !== false) {
+        $data = $this->getRequest()->getParams();
+        $url = '';
+        if (isset($files['data']) && strpos($files['data']['type'], 'audio/') !== false) {
             try {
                 $mediaDir = $this->fileSystem->getDirectoryWrite(DirectoryList::MEDIA);
                 $target = $mediaDir->getAbsolutePath(self::UPLOAD_DIRECTORY);
-
-                /** @var $uploader Uploader */
-                $uploader = $this->uploaderFactory->create(['fileId' => 'audio_file']);
-
-                /** rename file name if already exists */
-                $uploader->setAllowRenameFiles(true);
-
-                $result = $uploader->save($target);
-                if ($result['file']) {
-                    $fullPath = $result['path'] . "/" . $result['file'];
-                    $url = $this->helper->getSearchUrl($fullPath);
-                    return $this->jsonFactory->create()->setData($url);
+                $fileName = $target . "/" . $data['fname'];
+                $result = move_uploaded_file(
+                    $_FILES['data']['tmp_name'],
+                    $fileName
+                );
+                if ($result) {
+                    $url = $this->helper->getSearchUrl($fileName);
                 }
             } catch (\Exception $e) {
                 /**
@@ -95,6 +84,6 @@ class Index extends Action
                  */
             }
         }
-        return $this->jsonFactory->create()->setData('');
+        return $this->jsonFactory->create()->setData($url);
     }
 }

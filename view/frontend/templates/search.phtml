@@ -30,76 +30,122 @@
         <div id="inputAudio">
             <image src="<?= $this->getViewFileUrl('ImaginationMedia_AudioSearch::images/microphone.svg') ?>"
                    id="recordImage" onclick="askForAudio();"/>
-            <legend><?= __('Click in the image and tell us what you need.') ?></legend>
-            <input type="file" accept="audio/*" capture="microphone" id="recorder" style="display: none;">
+            <legend id="imageLegend"><?= __('Click in the image and tell us what you need.') ?></legend>
         </div>
-        <image src="<?= $this->getViewFileUrl('ImaginationMedia_AudioSearch::images/gear.svg') ?>"
-               id="loadingAudioImage" style="display: none;" />
+        <div id="loadingAudioImage" style="display: none;">
+            <image src="<?= $this->getViewFileUrl('ImaginationMedia_AudioSearch::images/gear.svg') ?>" />
+            <p><?= __('Finding results for you...') ?></p>
+        </div>
         <p id="error-audio" style="display: none;"><?= __('Invalid file provided. Please try again.') ?></p>
     </div>
 </div>
 
 <script>
+    URL = window.URL || window.webkitURL;
+    var gumStream;
+    var rec;
+    var input;
+    var AudioContext = window.AudioContext || window.webkitAudioContext;
+    var audioContext = new AudioContext;
+
     let popupLinkElement = document.getElementById("popup-notification-link");
     let popupFormElement = document.getElementById("popup-notification-search");
     let errorElement = document.getElementById("error-audio");
-    let recorder = document.getElementById("recorder");
-    let closePopupElement = document.getElementById("popupCloseButton");
     let loadingAudioImage = document.getElementById("loadingAudioImage");
     let divInputAudioElement = document.getElementById("inputAudio");
+    let legendElement = document.getElementById("imageLegend");
+    var timerSeconds = 0;
 
-    function showSearch()
-    {
+    let Recorder = undefined;
+
+    require(["recordJs"], function (Rec) {
+        Recorder = Rec;
+    });
+
+    function showSearch() {
+        legendElement.textContent = "<?= __('Click in the image and tell us what you need.') ?>";
         popupLinkElement.classList.add("hide");
         popupFormElement.classList.add("show");
     }
 
-    function askForAudio()
-    {
-        recorder.click();
+    function askForAudio() {
+        startRecording();
     }
 
-    function closePopUp()
-    {
+    function closePopUp() {
         popupLinkElement.classList.remove("hide");
         popupFormElement.classList.remove("show");
     }
 
-    function loadData()
-    {
+    function loadData() {
         loadingAudioImage.style.display = "block";
         divInputAudioElement.style.display = "none";
     }
 
-    function finishLoadData()
-    {
+    function finishLoadData() {
         loadingAudioImage.style.display = "none";
         divInputAudioElement.style.display = "block";
     }
 
-    recorder.addEventListener('change', function(e) {
+    function startRecording() {
         errorElement.style.display = 'none';
-        if (e.target !== undefined) {
-            loadData();
-            let file = e.target.files[0];
-            let formData = new FormData();
-            formData.append('audio_file', file, file.name);
-            let xhr = new XMLHttpRequest();
-            xhr.open('POST', '<?= $this->getFormUrl() ?>', true);
-            xhr.onload = function () {
-                if (xhr.status === 200) {
-                    if (xhr.responseText !== "") {
-                        console.log(xhr.responseText);
-                        window.location.href = JSON.parse(xhr.responseText);
-                    } else {
-                        console.log('Impossible to listen');
-                    }
+        var constraints = {audio: true, video: false};
+        navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+            gumStream = stream;
+            input = audioContext.createMediaStreamSource(stream);
+            rec = new Recorder(input, {numChannels: 1})
+            rec.record();
+            var fiveSeconds = 5;
+            timerSeconds = 0;
+            startTimer(fiveSeconds, legendElement);
+        }).catch(function (err) {
+            console.log("Error:");
+            console.log(err);
+        });
+    }
+
+    function stopRecording() {
+        loadData();
+        rec.stop();
+        gumStream.getAudioTracks()[0].stop();
+        rec.exportWAV(uploadAudio);
+    }
+
+    function uploadAudio(blob) {
+        let formData = new FormData();
+        formData.append('fname', new Date().toISOString() + '.wav');
+        formData.append('data', blob);
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', '<?= $this->getFormUrl() ?>', true);
+        xhr.onload = function () {
+            if (xhr.status === 200) {
+                if (xhr.responseText !== "") {timmerSeconds
+                    window.location.href = JSON.parse(xhr.responseText);
                 } else {
-                    errorElement.style.display = 'block';
-                    finishLoadData();
+                    console.log('Impossible to listen');
                 }
-            };
-            xhr.send(formData);
-        }
-    });
+            } else {
+                errorElement.style.display = 'block';
+                finishLoadData();
+            }
+        };
+        xhr.send(formData);
+    }
+
+    function startTimer(duration, display) {
+        var timer = duration, seconds;
+        setInterval(function () {
+            timerSeconds++;
+            seconds = parseInt(timer % 60, 10);
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+            display.textContent = "Listening: " + seconds;
+            if (--timer < 0) {
+                timer = duration;
+            }
+            if (timerSeconds === 7) {
+                stopRecording();
+            }
+        }, 1000);
+    }
+
 </script>
